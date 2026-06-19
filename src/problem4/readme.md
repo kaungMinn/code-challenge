@@ -171,8 +171,8 @@ Ran all test suites matching src/problem4/sum_to_n.test.ts.
 ```
 problem4/
   ├─ sum_to_n.ts        # Source code for three implementations
-  ├─ run_tests.ts       # Test script
-  └─ README.md          # This file
+  ├─ sum_to_n.test.ts       # Test script
+  └─ readme.md          # This file
 ```
 
 ## Summary 
