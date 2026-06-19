@@ -87,4 +87,5 @@ Thumbs.db
 *.sln
 *.sw?
 
-patterns.txt
+patterns.txtnode_modules
+node_modules
