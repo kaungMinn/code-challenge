@@ -6,6 +6,8 @@ import { config } from "../config/config.js";
 
 const connectionString = `${config.DATABASE_URL}`;
 
+console.log("Connection String", connectionString);
+
 const adapter = new PrismaBetterSqlite3({ url: connectionString });
 const prisma = new PrismaClient({ adapter });
 

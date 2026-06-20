@@ -1,9 +1,10 @@
+import "dotenv/config";
 import { z } from 'zod';
 
 const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().default("3000").transform((val) => parseInt(val, 10)),
-  DATABASE_URL: z.url().default('postgresql://postgres:postgres@localhost:5432/express_beast'),
+  DATABASE_URL: z.url().default('file:./dev.db'),
 });
 
 const parseResult = environmentSchema.safeParse(process.env);

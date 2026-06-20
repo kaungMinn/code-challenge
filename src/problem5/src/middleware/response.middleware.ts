@@ -11,10 +11,10 @@ export const responseMiddleware = (_req: Request, res: Response, next: NextFunct
     });
   };
 
-  res.error = (message: string, status: number = 500) => {
+  res.error = (message: string, status: number = 500, data?: any) => {
     res.status(status).json({
       success: false,
-      data: null,
+      data: data,
       error: message,
       meta: { timestamp: new Date().toISOString() },
     });
