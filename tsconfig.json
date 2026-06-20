@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "nodenext",
     "target": "es2022",
-    "types": ["jest"],
+    "types": ["jest", "node", "express"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
@@ -16,5 +16,9 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
     "esModuleInterop": true,
-  }
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"]
+  },
 }

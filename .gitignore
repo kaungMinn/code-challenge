@@ -89,3 +89,7 @@ Thumbs.db
 
 patterns.txtnode_modules
 node_modules
+
+/src/generated/prisma
+
+/generated/prisma
