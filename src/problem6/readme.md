@@ -150,7 +150,8 @@ Key Implementations:
     * **Default:** `0`
     * **Explanation:** Enables pagination by allowing the client to request subsequent pages of data.
 - **Success Response** (200 OK)
-  ```json{
+  ```json
+  {
   "status": "success",
   "data": {
     "leaderboard": [
@@ -168,16 +169,18 @@ Key Implementations:
   *  ``Bearer <JWT_TOKEN>`` 
   * ``Content-Type: application/json``
 - **Payload:**
-  ```json{
+  ```json
+  {
   "action_id": "string",
   "action_type": "LEVEL_COMPLETE"
 }
 - **Success Response** (200 OK):
-  ```json{
+  ```json
+  {
   "status": "success",
   "message": "Score updated successfully",
   "new_score": 1510
-}
+} 
 - **Error Responses:**
   * **``401`` Unauthorized**: Token is missing or invalid.
 Used to securely increment a user's score upon action completion.
@@ -203,10 +206,12 @@ Used to securely increment a user's score upon action completion.
     }
   }
 - **Error Response (404 Not Found):**
-  ```json{
+  ```json 
+  {
   "status": "error",
   "message": "User not found"
 }
+
 
 
 ## 📚 Documentation
