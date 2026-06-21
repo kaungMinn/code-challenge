@@ -74,6 +74,8 @@ sequenceDiagram
 
 ### 2. POST /api/v1/resources
 - **Description:** Create a new resource.
+- **Headers:** - 
+  * ``Content-Type: application/json``
 - **Payload Example:**
   ```json
   {
