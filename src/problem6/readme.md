@@ -1,4 +1,5 @@
 ### Problem 6: Architecture
+The system utilizes a stateless, horizontally scalable API architecture powered by Redis for real-time leaderboards and PostgreSQL for durable persistence
 
 ## 1. Project Objective
 This service manages a real-time leaderboard for our website. The core objectives are:
@@ -122,9 +123,18 @@ The system uses JSON Web Tokens (JWT) for stateless, scalable authentication. To
 -   **Token Versioning:** Each user has a token_version stored in the database. Every request validates the token's version against the database, allowing for immediate "Logout All Sessions" functionality if a user's account is compromised.
 -   **Revocation List:** A Redis-backed blacklist is used to immediately invalidate individual jti (JWT ID) claims, ensuring that access can be revoked before the token naturally expires.
 
+## 8. Real-Time Features (Socket.io)
+This system utilizes Socket.io to provide bidirectional, event-based communication between the server and the client.
 
-## 8.  End points
-### 8.1. ``GET`` /api/v1/leaderboards
+Key Implementations:
+- **Persistent Connections:** Maintains a long-lived connection for real-time data streaming (e.g., live score updates).
+
+- **Event-Driven Architecture:** Uses a pub/sub pattern where the server broadcasts score events to relevant subscribers.
+
+- **Automatic Fallbacks:** Socket.io handles connection drops and reconnections gracefully, ensuring the client remains in sync with the server.
+
+## 9.  End points
+### 9.1. ``GET`` /api/v1/leaderboards
 - **Description:** Retrieve the current Top 10 users' scores..
 - **Method:** ``GET``
 - **Headers:**
@@ -151,7 +161,7 @@ The system uses JSON Web Tokens (JWT) for stateless, scalable authentication. To
 }
 
 
-### 8.2. ``POST`` /api/v1/scores/increment
+### 9.2. ``POST`` /api/v1/scores/increment
 - **Description:** Atomically increments the user's score in the primary database and triggers a real-time leaderboard update
 - **Method:** ``POST``
 - **Headers:** - **Authorization:** 
@@ -198,150 +208,8 @@ Used to securely increment a user's score upon action completion.
   "message": "User not found"
 }
 
-## Request Lifecycle:
-Every request to the POST /increment endpoint is processed through a deterministic security pipeline. Requests that fail any of these gates are rejected immediately with the appropriate HTTP status code (401 for unauthorized, 429 for rate-limited, 403 for blocked actions).
-
-```mermaid
-
-sequenceDiagram
-    participant User
-    participant Middleware as API Gateway/Auth
-    participant API
-    participant Redis
-    participant DB
-    participant SocketServer
-
-    User->>Middleware: POST /increment (JWT Token)
-    Note over Middleware: Validate JWT
-    Middleware->>API: Authorized Request
-    API->>Redis: Check action_id (Idempotency)
-    Redis-->>API: Not found
-    API->>DB: Update score
-    API->>Redis: Invalidate leaderboard
-    API-->>User: 200 OK
-    API->>SocketServer: Emit "REFRESH"
-```
-
-``` mermaid 
-    erDiagram
-    USERS ||--o{ ACTION_LOGS : "performs"
-    USERS ||--|| SCORES : "has"
-    
-    USERS {
-        int user_id PK
-        string username
-        string email
-    }
-    ACTION_LOGS {
-        uuid action_id PK
-        int user_id FK
-        string action_type
-        int score_earned
-        timestamp created_at
-    }
-    SCORES {
-        int user_id PK
-        int total_score
-        timestamp updated_at
-    }
- ```
-
- ``` mermaid 
-
-graph TD
-    User((User)) -->|GET /leaderboard| API
-    
-    subgraph "High Performance Tier"
-    API -->|Check| Redis[Redis ZSET Leaderboard]
-    Redis -.->|Cache Miss| API
-    end
-    
-    subgraph "Persistence Tier"
-    API -->|Query| DB[(PostgreSQL)]
-    DB -->|Fetch| API
-    end
-    
-    API -->|Update Cache| Redis
-    
-    style Redis fill:#f9f,stroke:#333,stroke-width:2px
-    style DB fill:#e1f5fe,stroke:#333,stroke-width:2px
- ```
-
- 
- ```mermaid
-
-sequenceDiagram
-    autonumber
-    participant Client
-    participant AuthMiddleware as API Server (Auth Middleware)
-    participant Redis
-    participant DB as PostgreSQL
-
-    Client->>AuthMiddleware: Protected Request (Bearer <token>)
-    
-    rect rgb(240, 248, 255)
-        Note over AuthMiddleware: 1. Signature Verification
-        AuthMiddleware->>AuthMiddleware: Validate Signature
-        alt Invalid Signature
-            AuthMiddleware-->>Client: 401 Unauthorized
-        end
-    end
-
-    rect rgb(255, 245, 238)
-        Note over AuthMiddleware, Redis: 2. Revocation Check
-        AuthMiddleware->>Redis: Get jti (is blacklisted?)
-        alt jti is Blacklisted
-            AuthMiddleware-->>Client: 401 Unauthorized
-        end
-    end
-
-    rect rgb(230, 255, 230)
-        Note over AuthMiddleware, DB: 3. Session Validation
-        AuthMiddleware->>DB: Get token_version (uid)
-        AuthMiddleware->>AuthMiddleware: JWT.token_version < DB.token_version?
-        alt Version Mismatch
-            AuthMiddleware-->>Client: 401 Unauthorized
-        end
-    end
-
-    AuthMiddleware->>AuthMiddleware: Proceed to Business Logic
-    AuthMiddleware-->>Client: 200 OK
-
-```
-``` mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant LoadBalancer
-    participant WebSocketServer
-    participant RedisPubSub
-
-    Note over Client, WebSocketServer: 1. Handshake Phase
-    Client->>WebSocketServer: WS Connection Request (JWT Auth)
-    WebSocketServer->>WebSocketServer: Validate JWT
-    WebSocketServer-->>Client: 101 Switching Protocols
-
-    Note over WebSocketServer, RedisPubSub: 2. Subscription Phase
-    WebSocketServer->>RedisPubSub: Subscribe to 'leaderboard_updates'
-
-    Note over Client, WebSocketServer: 3. Real-time Phase
-    loop Heartbeat
-        WebSocketServer->>Client: Ping
-        Client-->>WebSocketServer: Pong
-    end
-
-    Note over RedisPubSub, WebSocketServer: 4. Event Broadcast
-    RedisPubSub-->>WebSocketServer: New Score Event
-    WebSocketServer-->>Client: Emit 'SCORE_UPDATE' (data)
-
-    Note over Client, WebSocketServer: 5. Cleanup
-    Client->>WebSocketServer: Close Connection
-    WebSocketServer->>WebSocketServer: Unsubscribe from Topics
-
-  ```
-
 
 ## 📚 Documentation
-- [Architecture & Flow](./ARCHITECTURE.md)
-- [Future Improvements](./IMPROVEMENTS.md)
+- [Architecture & Flow](./architecture.md)
+- [Future Improvements](./improvement.md)
 
